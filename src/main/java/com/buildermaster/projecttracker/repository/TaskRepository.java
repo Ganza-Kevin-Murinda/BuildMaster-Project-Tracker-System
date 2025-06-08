@@ -297,8 +297,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
      * Find tasks due this week
      * @return list of tasks due within the current week
      */
-    @Query("SELECT t FROM Task t WHERE t.dueDate BETWEEN CURRENT_DATE AND CURRENT_DATE + 7")
-    List<Task> findTasksDueThisWeek();
+    @Query("SELECT t FROM Task t WHERE t.dueDate BETWEEN :now AND :nextWeek")
+    List<Task> findTasksDueThisWeek(@Param("now") LocalDate now, @Param("nextWeek") LocalDate nextWeek);
+
 
     /**
      * Find recently created tasks (within last N days)
@@ -324,10 +325,11 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("SELECT " +
             "COUNT(*) as total, " +
             "SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed, " +
-            "SUM(CASE WHEN t.status = 'PENDING' THEN 1 ELSE 0 END) as pending, " +
-            "SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress " +
+            "SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END) as pending, " +
+            "SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress, " +
+            "SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked " +
             "FROM Task t WHERE t.project.id = :projectId")
-    Object[] getTaskStatisticsByProject(@Param("projectId") UUID projectId);
+    List<Object[]> getTaskStatisticsByProject(@Param("projectId") UUID projectId);
 
     /**
      * Get task completion statistics by developer
@@ -337,8 +339,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("SELECT " +
             "COUNT(*) as total, " +
             "SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed, " +
-            "SUM(CASE WHEN t.status = 'PENDING' THEN 1 ELSE 0 END) as pending, " +
-            "SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress " +
+            "SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END) as pending, " +
+            "SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress, " +
+            "SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked " +
             "FROM Task t WHERE t.developer.id = :developerId")
-    Object[] getTaskStatisticsByDeveloper(@Param("developerId") UUID developerId);
+    List<Object[]> getTaskStatisticsByDeveloper(@Param("developerId") UUID developerId);
 }
